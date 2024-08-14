@@ -1,0 +1,80 @@
+#!/bin/sh
+
+rand=$RANDOM
+layers_base_image_cache="${cache_folder:-/tmp}/base_image_layers_${rand}.json"
+layers_target_image_cache="${cache_folder:-/tmp}/target_image_layers_${rand}.json"
+layers_intersection="${cache_folder:-/tmp}/layers_intersection_${rand}.json"
+
+clean_up() {
+  if [ -f "${layers_base_image_cache}" ]; then
+    rm "${layers_base_image_cache}"
+  fi
+  if [ -f "${layers_target_image_cache}" ]; then
+    rm "${layers_target_image_cache}"
+  fi
+  if [ -f "${layers_intersection}" ]; then
+    rm "${layers_intersection}"
+  fi
+}
+
+if [ -n "${base_registry_user:-}" ] && [ -n "${base_registry_pass:-}" ]; then
+  ret=$(skopeo inspect --creds "${base_registry_user}:${base_registry_pass}" "docker://${base_image:?}:${base_tag:?}")
+else
+  ret=$(skopeo inspect "docker://${base_image:?}:${base_tag:?}")
+fi
+
+status=$?
+
+log 5 "status: $status"
+
+if [ "$status" -gt 0 ]; then
+  log 3 "cannot get base image ${base_image}:${base_tag}. Abort"
+  clean_up
+  return 1
+fi
+
+echo $ret | jq '.Layers' >"${layers_base_image_cache}"
+
+if [ -n "${target_registry_user:-}" ] && [ -n "${target_registry_pass:-}" ]; then
+  ret=$(skopeo inspect --creds "${target_registry_user}:${target_registry_pass}" "docker://${target_image:?}:${target_tag:?}")
+else
+  ret=$(skopeo inspect "docker://${target_image:?}:${target_tag:?}")
+fi
+
+status=$?
+
+log 5 "status: $status"
+
+if [ "$status" -gt 0 ]; then
+  log 4 "cannot get last target image ${target_image}:${target_tag}. Assume this is the first bild"
+  clean_up
+  return 19
+fi
+
+echo $ret | jq '.Layers' >"${layers_target_image_cache}"
+
+# get the intersection of the two lists
+jq -s '.[0] - (.[0] - .[1])' "${layers_target_image_cache}" "${layers_base_image_cache}" >"${layers_intersection}"
+
+if [ "${verbosity:-7}" -gt 7 ]; then
+  log 7 "intersection of image layers"
+  cat "$layers_intersection"
+fi
+
+# check if the intersection matches the base_image
+difference_base_image_layers=$(jq -s '.[0] - .[1] | length' "${layers_base_image_cache}" "${layers_intersection}")
+
+if [ "${verbosity:-7}" -gt 7 ]; then
+  log 7 "Difference between intersection and base_imaeg layers"
+  jq -s '.[0] - .[1]' "${layers_base_image_cache}" "${layers_intersection}"
+fi
+
+if [ "$difference_base_image_layers" -gt 0 ]; then
+  log 7 "found a difference in the base image layers, build new image"
+  clean_up
+  return 18
+else
+  log 7 "found no difference in base image layers, cancel pipeline gracefully"
+  clean_up
+  return 42
+fi

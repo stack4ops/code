@@ -1,0 +1,80 @@
+---
+workflow:
+  rules:
+    # Do not create a pipline on merge request
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+    # Create a pipline on schedules
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+    # Create a pipline on web "Run pipline"
+    - if: $CI_PIPELINE_SOURCE == "web"
+    # Create a pipline on commits on the default branch (latest)
+    - if: $CI_COMMIT_BRANCH == "$CI_DEFAULT_BRANCH"
+
+stages:
+  - check
+  - build
+  - test
+  - deploy
+
+.prepare:
+  cache:
+    - key: cache-$CI_PIPELINE_ID
+      paths:
+        - cache/
+  variables:
+    AUTOBUILDERX_REF: "main"
+    AUTOBUILDERX_REF_FILE: $AUTOBUILDERX_REF
+    STAGE: "0"
+  before_script:
+    - |
+      curl -L -s "https://gitlab.com/eqsoft-appstack/autobuilderx/-/archive/${AUTOBUILDERX_REF}/autobuilderx-${AUTOBUILDERX_REF_FILE}.tar.gz" | tar xzf - --strip-components=1 "autobuilderx-${AUTOBUILDERX_REF_FILE}/bin"
+      chmod -R 755 bin
+      export PATH=$PATH:$(pwd)/bin
+  tags:
+    - buildx
+  resource_group: buildx
+  rules:
+    - if: $STAGE == "0"
+      when: never
+    # Only run on commti if somthing changed
+    - if: $CI_COMMIT_BRANCH == "$CI_DEFAULT_BRANCH"
+      changes:
+        - Containerfile
+        - tests/*
+        - assets/**/*
+      when: on_success
+    - when: on_success
+
+check:
+  stage: check
+  variables:
+    STAGE: $CHECK_STAGE
+  script: "autobuilderx -s check -vvvv"
+  extends: .prepare
+  rules:
+    - if: $STAGE == "0"
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "push"
+      when: never
+    - when: on_success
+build:
+  stage: build
+  variables:
+    STAGE: $BUILD_STAGE
+  script: "autobuilderx -s build"
+  extends: .prepare
+
+test:
+  stage: test
+  script: "autobuilderx -s test"
+  variables:
+    STAGE: $TEST_STAGE
+  extends: .prepare
+
+deploy:
+  stage: deploy
+  script: "autobuilderx -s deploy"
+  extends: .prepare
+  variables:
+    STAGE: $DEPLOY_STAGE
