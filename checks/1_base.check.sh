@@ -48,7 +48,7 @@ log 5 "status: $status"
 if [ "$status" -gt 0 ]; then
   log 4 "cannot get last target image ${target_image}:${target_tag}. Assume this is the first bild"
   clean_up
-  return 19
+  return 18
 fi
 
 echo $ret | jq '.Layers' >"${layers_target_image_cache}"
