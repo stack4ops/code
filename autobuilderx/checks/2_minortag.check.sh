@@ -1,3 +1,8 @@
+if [ "${pipeline_env}" = "local" ] && [ "${local_only}" = "1" ]; then
+  log 5 "skip minortag.check in local_only mode"
+  return 18
+fi
+
 creds=""
 
 if [ -n "${base_registry_user:-}" ] && [ -n "${base_registry_pass:-}" ]; then

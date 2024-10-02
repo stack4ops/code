@@ -1,5 +1,12 @@
 #!/bin/sh
 
+# layers of base_image check in local_only mode is not possible 
+# because layers are not preserved in docker storage
+if [ "${local_only}" = "1" ]; then
+  log 5 "skip base.check in local_only mode"
+  return 18
+fi
+
 rand=$RANDOM
 layers_base_image_cache="${cache_folder:-/tmp}/base_image_layers_${rand}.json"
 layers_target_image_cache="${cache_folder:-/tmp}/target_image_layers_${rand}.json"
