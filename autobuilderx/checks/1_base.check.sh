@@ -89,5 +89,9 @@ if [ "$difference_base_image_layers" -gt 0 ]; then
 else
   log 7 "found no difference in base image layers, cancel pipeline gracefully"
   clean_up
-  return 42
+  if [ "${build_force}" = "1" ]; then
+    return 42
+  else
+    return 43
+  fi
 fi
