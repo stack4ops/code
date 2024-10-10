@@ -1,8 +1,8 @@
 #!/bin/sh
 
 # only check in scheduled pipelines not commits or other triggers
-if [ "${pipeline_env}" = "ci" ] && [ "${CI_PIPELINE_SOURCE:-}" != "scheduled" ]; then
-  log 7 "base.check only in scheduled ci pipeline or local"
+if [ "${pipeline_env}" = "ci" ] && [ "${CI_PIPELINE_SOURCE:-}" != "schedule" ]; then
+  log 7 "base.check only in schedule ci pipeline or local"
   return 18
 fi
 
