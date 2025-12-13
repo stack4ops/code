@@ -13,7 +13,7 @@ ARG USERNAME=www-data
 ARG USER_UID=33
 ARG USER_GID=$USER_UID
 # customizing for php development
-ARG PHP_VERSION=8.3
+ARG PHP_VERSION=8.4
 ENV PHP_VERSION=$PHP_VERSION
 
 ENV OPENVSCODE_SERVER_ROOT="/home/.openvscode-server"
@@ -28,27 +28,17 @@ RUN <<EOF
 set -e
 apt-get update
 apt-get install -y --no-install-recommends \
-software-properties-common \
 apt-transport-https
-apt-add-repository ppa:ondrej/php
 apt-get update
 apt-get install -y --no-install-recommends \
+software-properties-common \
 tzdata \
 curl \
 openssl \
 git \
-php7.4 \
-php8.0 \
-php8.1 \
-php8.2 \
-php8.3 \
-php8.4
+lsb-release 
 ln -snf /usr/share/zoneinfo/$TZ /etc/localtime
 echo $TZ > /etc/timezone
-update-alternatives --set php /usr/bin/php${PHP_VERSION}
-apt-get update
-curl --silent --show-error https://getcomposer.org/installer | php && mv ${PWD}/composer.phar /usr/bin/
-ln -s /usr/bin/composer.phar /usr/bin/composer
 userdel -f $USERNAME
 groupadd --gid $USER_GID $USERNAME
 useradd --uid $USER_UID --gid $USERNAME -m -s /bin/bash $USERNAME
@@ -59,9 +49,29 @@ chown -R $USERNAME:$USERNAME /home/workspace
 chown -R $USERNAME:$USERNAME ${OPENVSCODE_SERVER_ROOT}
 EOF
 
+# installation of ondrej php
+RUN <<EOF
+set -e
+apt-get update
+add-apt-repository ppa:ondrej/php
+apt-get update
+apt-get install -y --no-install-recommends \
+php7.4 \
+php8.0 \
+php8.1 \
+php8.2 \
+php8.3 \
+php8.4
+update-alternatives --set php /usr/bin/php${PHP_VERSION}
+apt-get update
+curl --silent --show-error https://getcomposer.org/installer | php && mv ${PWD}/composer.phar /usr/bin/
+ln -s /usr/bin/composer.phar /usr/bin/composer
+EOF
+
 # user context www-data
 USER $USERNAME
-
+ENV SHELL /bin/bash
+SHELL ["/bin/bash", "-c"]
 RUN \
     # Direct download links to external .vsix not available on https://open-vsx.org/
     # The two links here are just used as example, they are actually available on https://open-vsx.org/
