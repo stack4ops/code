@@ -1,11 +1,12 @@
-ARG BASE_IMAGE=debian
-ARG BASE_TAG=latest
+FROM gitpod/openvscode-server:latest
+
 ARG HTTP_PROXY=
 ARG HTTPS_PROXY=
 ARG http_proxy=
 ARG https_proxy=
 
-FROM ${BASE_IMAGE}:${BASE_TAG}
+ARG TARGETARCH
+
 LABEL maintainer="Stefan Schneider <eqsoft4@gmail.com>"
 
 ARG USERNAME=www-data
@@ -22,7 +23,6 @@ USER root
 
 ENV DEBIAN_FRONTEND noninteractive
 ENV TZ=Europe/Berlin
-SHELL ["/bin/bash", "-c"]
 
 RUN <<EOF
 set -e
@@ -41,7 +41,8 @@ php7.4 \
 php8.0 \
 php8.1 \
 php8.2 \
-php8.3
+php8.3 \
+php8.4
 ln -snf /usr/share/zoneinfo/$TZ /etc/localtime
 echo $TZ > /etc/timezone
 update-alternatives --set php /usr/bin/php${PHP_VERSION}
@@ -60,8 +61,7 @@ EOF
 
 # user context www-data
 USER $USERNAME
-ENV SHELL /bin/bash
-SHELL ["/bin/bash", "-c"]
+
 RUN \
     # Direct download links to external .vsix not available on https://open-vsx.org/
     # The two links here are just used as example, they are actually available on https://open-vsx.org/
