@@ -1,29 +1,22 @@
 ---
 variables:
-  CI_DOCKER_REF: "29.1.3"
-
   CIBUILDER_IMAGE: "${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/stack4ops/cibuilder"
-  CIBUILDER_REF: "${CI_DOCKER_REF}-cli"
-
-  CI_DIND_IMAGE: "${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/library/docker"
-  CI_DIND_REF: "${CI_DOCKER_REF}-dind"
-
-  DOCKER_HOST: tcp://docker:2375/
-  DOCKER_DRIVER: overlay2
+  #CIBUILDER_IMAGE: "docker.io/stack4ops/cibuilder"
+  CIBUILDER_REF: "rootless"
 
 image: "${CIBUILDER_IMAGE}:${CIBUILDER_REF}"
 
-services:
-  - name: "${CI_DIND_IMAGE}:${CI_DIND_REF}"
-    alias: docker
 workflow:
   rules:
     # Trigger rules:
     # The default CI_PIPELINE_SOURCE trigger is schedule
     # Edit or comment in other trigger below
 
+    # Create a pipline on web "Run pipline"
+    - if: $CI_PIPELINE_SOURCE == "web"
+
     # Create a pipline on schedules
-    - if: $CI_PIPELINE_SOURCE == "schedule"
+    # - if: $CI_PIPELINE_SOURCE == "schedule"
 
     # Create a pipline on every push commit
     # - if: $CI_PIPELINE_SOURCE == "push"
@@ -31,12 +24,10 @@ workflow:
     # Create a pipeline on merge_requests_event
     # - if: $CI_PIPELINE_SOURCE == "merge_request_event"
 
-    # Create a pipline on web "Run pipline"
-    # - if: $CI_PIPELINE_SOURCE == "web" 
-
     # Example: Create pipeline on every push on every branch except main branch
     # - if: $CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE == "push"
     #   when: never
+    - when: never
 
 stages:
   - check
@@ -44,31 +35,64 @@ stages:
   - test
   - deploy
 
-.prepare:
-  cache:
-    - key: cache-$CI_PIPELINE_ID
-      paths:
-        - cache/
-  resource_group: buildx
-
 check:
   stage: check
-  script: "cibuild -s check"
-  extends: .prepare
+  variables:
+    CIBUILDER_BIN_REF: main
+    CIBUILD_RUN_CMD: check
+  script:
+    - /bin/true
   
-build:
+build-amd64:
   stage: build
-  script: "cibuild -s build"
-  extends: .prepare
+  variables:
+    CIBUILDER_BIN_REF: main
+    CIBUILD_RUN_CMD: build
+  script:
+    - /bin/true
   tags:
-    - saas-linux-large-amd64
+    - saas-linux-medium-amd64
 
-test:
+build-arm64:
+  stage: build
+  variables:
+    CIBUILDER_BIN_REF: main
+    CIBUILD_RUN_CMD: build
+  script:
+    - /bin/true
+  tags:
+    - saas-linux-medium-arm64
+
+test-amd64:
   stage: test
-  script: "cibuild -s test"
-  extends: .prepare
+  services:
+    - name: docker:dind
+      alias: docker
+  variables:
+    CIBUILDER_BIN_REF: main
+    CIBUILD_RUN_CMD: test
+  script:
+    - /bin/true
+  tags:
+    - saas-linux-medium-amd64
+
+test-arm64:
+  stage: test
+  services:
+    - name: docker:dind
+      alias: docker
+  variables:
+    CIBUILDER_BIN_REF: main
+    CIBUILD_RUN_CMD: test
+  script:
+    - /bin/true
+  tags:
+    - saas-linux-medium-arm64
 
 deploy:
   stage: deploy
-  script: "cibuild -s deploy"
-  extends: .prepare
+  variables:
+    CIBUILDER_BIN_REF: main
+    CIBUILD_RUN_CMD: deploy  
+  script:
+    - /bin/true
