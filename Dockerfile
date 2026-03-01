@@ -1,4 +1,4 @@
-FROM gitpod/openvscode-server:nightly
+FROM gitpod/openvscode-server:latest
 
 LABEL org.opencontainers.image.source="https://github.com/stack4ops/code"
 LABEL org.opencontainers.image.description="openvscode-server"
