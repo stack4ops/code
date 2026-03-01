@@ -19,10 +19,6 @@ ENV TZ=Europe/Berlin
 ENV OPENVSCODE_SERVER_ROOT=${HOME}/.openvscode-server
 ENV OPENVSCODE=${OPENVSCODE_SERVER_ROOT}/bin/openvscode-server
 
-# Microsoft Marketplace (für spätere manuelle Extension Installation)
-ENV EXTENSIONS_GALLERY='{"serviceUrl": "https://marketplace.visualstudio.com/_apis/public/gallery","cacheUrl": "https://vscode.blob.core.windows.net/gallery/index","itemUrl": "https://marketplace.visualstudio.com/items"}'
-
-
 # ---- Base packages ----
 RUN <<'EOF'
 set -e
@@ -86,34 +82,12 @@ tar -xzf /tmp/openvscode-server.tar.gz -C ${OPENVSCODE_SERVER_ROOT} --strip-comp
 rm /tmp/openvscode-server.tar.gz
 EOF
 
-
-# ---- Configure Marketplace ----
-RUN <<'EOF'
-set -e
-
-CONFIG_DIR="${HOME}/.openvscode-server/data/Machine"
-mkdir -p ${CONFIG_DIR}
-
-cat <<'JSON' > ${CONFIG_DIR}/settings.json
-{
-  "extensionsGallery": {
-    "serviceUrl": "https://marketplace.visualstudio.com/_apis/public/gallery",
-    "cacheUrl": "https://vscode.blob.core.windows.net/gallery/index",
-    "itemUrl": "https://marketplace.visualstudio.com/items"
-  }
-}
-JSON
-
-chown -R ${USERNAME}:${USERNAME} ${HOME}/.openvscode-server
-EOF
-
-
 # ---- Prepare Extensions Directory (no installation in build) ----
-RUN <<'EOF'
-set -e
-mkdir -p ${HOME}/.openvscode-server/extensions
-chown -R ${USERNAME}:${USERNAME} ${HOME}/.openvscode-server/extensions
-EOF
+# RUN <<'EOF'
+# set -e
+# mkdir -p ${HOME}/.openvscode-server/extensions
+# chown -R ${USERNAME}:${USERNAME} ${HOME}/.openvscode-server/extensions
+# EOF
 
 USER ${USERNAME}
 
