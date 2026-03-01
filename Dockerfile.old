@@ -1,0 +1,51 @@
+FROM gitpod/openvscode-server:nightly
+
+ARG HTTP_PROXY=
+ARG HTTPS_PROXY=
+ARG http_proxy=
+ARG https_proxy=
+
+ARG USERNAME=www-data
+ARG USER_UID=33
+ARG USER_GID=33
+
+USER root
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=Europe/Berlin
+ENV OPENVSCODE_SERVER_ROOT="/home/.openvscode-server"
+ENV OPENVSCODE="${OPENVSCODE_SERVER_ROOT}/bin/openvscode-server"
+
+RUN <<'EOF'
+set -e
+apt-get update
+apt-get install -y --no-install-recommends \
+  ca-certificates \
+  curl \
+  gnupg \
+  tzdata \
+  git \
+  openssl
+
+ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime
+echo ${TZ} > /etc/timezone
+EOF
+
+RUN <<'EOF'
+set -e
+userdel -f ${USERNAME} || true
+
+groupadd --gid ${USER_GID} ${USERNAME}
+useradd --uid ${USER_UID} --gid ${USER_GID} -m -s /bin/bash ${USERNAME}
+
+echo "${USERNAME} ALL=(root) NOPASSWD:ALL" > /etc/sudoers.d/${USERNAME}
+chmod 0440 /etc/sudoers.d/${USERNAME}
+
+chmod g+rw /home
+chown -R ${USERNAME}:${USERNAME} /home/workspace
+chown -R ${USERNAME}:${USERNAME} ${OPENVSCODE_SERVER_ROOT}
+EOF
+
+ENV SHELL=/bin/bash
+SHELL ["/bin/bash", "-c"]
+USER ${USERNAME}

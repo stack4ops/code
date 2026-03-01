@@ -1,0 +1,6 @@
+[
+    {
+        "type": "log",
+        "assert": "Web UI available at"
+    }
+]
