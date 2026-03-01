@@ -1,4 +1,4 @@
-name: cibuilder
+name: code
 
 on:
   workflow_dispatch:
