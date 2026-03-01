@@ -54,8 +54,6 @@ mkdir -p ${WORKSPACE}
 echo "${USERNAME} ALL=(root) NOPASSWD:ALL" > /etc/sudoers.d/${USERNAME}
 chmod 0440 /etc/sudoers.d/${USERNAME}
 
-chmod g+rw ${HOME}
-chown -R ${USERNAME}:${USERNAME} ${HOME}
 EOF
 
 
@@ -80,6 +78,10 @@ mkdir -p ${OPENVSCODE_SERVER_ROOT}
 
 tar -xzf /tmp/openvscode-server.tar.gz -C ${OPENVSCODE_SERVER_ROOT} --strip-components=1
 rm /tmp/openvscode-server.tar.gz
+
+chmod g+rw ${HOME}
+chown -R ${USERNAME}:${USERNAME} ${HOME}
+
 EOF
 
 # ---- Prepare Extensions Directory (no installation in build) ----
