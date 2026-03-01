@@ -73,8 +73,7 @@ curl -fsSL \
   https://github.com/gitpod-io/openvscode-server/releases/download/${LATEST}/${LATEST}-linux-${ARCH}.tar.gz \
   -o /tmp/openvscode-server.tar.gz
 
-rm -rf ${OPENVSCODE_SERVER_ROOT}
-mkdir -p ${OPENVSCODE_SERVER_ROOT}
+rm -rf ${OPENVSCODE}
 
 tar -xzf /tmp/openvscode-server.tar.gz -C ${OPENVSCODE_SERVER_ROOT} --strip-components=1
 rm /tmp/openvscode-server.tar.gz
