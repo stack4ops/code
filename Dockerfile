@@ -74,6 +74,8 @@ curl -fsSL \
   -o /tmp/openvscode-server.tar.gz
 
 rm -rf ${OPENVSCODE_SERVER_ROOT}/bin
+rm -rf ${OPENVSCODE_SERVER_ROOT}/lib
+rm -rf ${OPENVSCODE_SERVER_ROOT}/resources
 
 tar -xzf /tmp/openvscode-server.tar.gz -C ${OPENVSCODE_SERVER_ROOT} --strip-components=1
 rm /tmp/openvscode-server.tar.gz
